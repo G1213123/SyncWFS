@@ -1,0 +1,2 @@
+google-cloud-storage>=2.18.0,<4
+requests>=2.32.0,<3
