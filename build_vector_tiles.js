@@ -27,8 +27,9 @@ try {
 
 
 const BASE_DIR = path.resolve(process.env.APP_DIR || __dirname);
-const WFS_DIR = path.join(BASE_DIR, 'public', 'data', 'wfs');
-const MVT_DIR = path.join(BASE_DIR, 'public', 'data', 'mvt');
+const TMP_DIR = path.resolve(process.env.TMP_DIR || '/tmp');
+const WFS_DIR = path.join(TMP_DIR, 'public', 'data', 'wfs');
+const MVT_DIR = path.join(TMP_DIR, 'public', 'data', 'mvt');
 const MVT_MANIFEST_PATH = path.join(MVT_DIR, 'manifest.json');
 const { spawn } = require('child_process');
 
@@ -483,7 +484,7 @@ async function main() {
     // Spawn a child process that runs this script in single-layer mode
     const args = [
       `--max-old-space-size=${Math.max(2048, Number(process.env.BUILD_MVT_MEM) || 7168)}`,
-      path.join('jobs', 'build_vector_tiles.js'),
+      path.join(__dirname, 'build_vector_tiles.js'),
       '--single',
       layerDirName,
     ];

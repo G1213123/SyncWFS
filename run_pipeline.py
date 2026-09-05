@@ -8,10 +8,11 @@ from google.cloud import storage
 
 
 APP_DIR = Path(os.environ.get("APP_DIR", Path(__file__).resolve().parent)).resolve()
-MANIFEST_PATH = APP_DIR / "public" / "data" / "mvt" / "manifest.json"
+TMP_DIR = Path(os.environ.get("TMP_DIR", "/tmp")).resolve()
+MANIFEST_PATH = TMP_DIR / "public" / "data" / "mvt" / "manifest.json"
 BUCKET_NAME = os.environ.get("GCS_BUCKET", "road-sign-factory-asset")
 OBJECT_NAME = os.environ.get("GCS_OBJECT", "public/data/mvt/manifest.json")
-MVT_DIR = APP_DIR / "public" / "data" / "mvt"
+MVT_DIR = TMP_DIR / "public" / "data" / "mvt"
 
 
 def run_stage(command):
@@ -51,8 +52,8 @@ def upload_outputs():
 
 
 def main():
-    run_stage([os.environ.get("PYTHON_BIN", "python3"), "sync_wfs_layers.py"])
-    run_stage([os.environ.get("NODE_BIN", "node"), "build_vector_tiles.js"])
+    run_stage([os.environ.get("PYTHON_BIN", "python3"), str(APP_DIR / "sync_wfs_layers.py")])
+    run_stage([os.environ.get("NODE_BIN", "node"), str(APP_DIR / "build_vector_tiles.js")])
     upload_outputs()
 
 

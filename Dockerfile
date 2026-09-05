@@ -2,6 +2,7 @@ FROM node:22-bookworm
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    TMP_DIR=/tmp \
     APP_DIR=/app
 
 WORKDIR /app
@@ -16,6 +17,6 @@ RUN npm ci --omit=dev
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
-COPY sync_wfs_layers.py build_vector_tiles.js run_pipeline.py ./
+COPY . .
 
 CMD ["python3", "run_pipeline.py"]

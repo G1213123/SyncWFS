@@ -7,8 +7,10 @@ import requests
 from collections import defaultdict
 import math
 
-BASE_DIR = os.path.abspath(os.environ.get("APP_DIR", os.path.dirname(os.path.abspath(__file__))))
-OUTPUT_DIR = os.path.join(BASE_DIR, "public", "data", "wfs")
+APP_DIR = os.path.abspath(os.environ.get("APP_DIR", os.path.dirname(os.path.abspath(__file__))))
+TMP_DIR = os.path.abspath(os.environ.get("TMP_DIR", "/tmp"))
+BASE_DIR = APP_DIR
+OUTPUT_DIR = os.path.join(TMP_DIR, "public", "data", "wfs")
 METADATA_PATH = os.path.join(OUTPUT_DIR, "metadata.json")
 WFS_BASE_URL = "https://portal.csdi.gov.hk/server/services/common/td_rcd_1638928986276_39755/MapServer/WFSServer"
 
