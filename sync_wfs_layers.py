@@ -251,6 +251,9 @@ def download_layer(layer_name):
             json.dump(collection, out_file, ensure_ascii=False)
         saved_chunks += 1
 
+    # Release the layer's feature and tile references before processing the next layer.
+    del payload, features, tiles
+
     return {
         "layer": layer_name,
         "featureCount": total_seen,
@@ -265,32 +268,49 @@ def main():
     started_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat() + "Z"
     print(f"WFS sync started at {started_at}")
 
-    results = []
+    layer_results_path = os.path.join(OUTPUT_DIR, "layer_results.jsonl")
+    with open(layer_results_path, "w", encoding="utf-8"):
+        pass
+
+    successful_layers = 0
     failures = []
 
     for layer_name in LAYERS:
         try:
             result = download_layer(layer_name)
-            results.append(result)
+            with open(layer_results_path, "a", encoding="utf-8") as result_file:
+                result_file.write(json.dumps(result, ensure_ascii=False) + "\n")
+            del result
+            successful_layers += 1
         except Exception as err:
             print(f"\n[!] ERROR in {layer_name} [!]")
             traceback.print_exc()
             failures.append({"layer": layer_name, "error": str(err)})
 
     finished_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat() + "Z"
-    metadata = {
-        "generatedAt": finished_at,
-        "source": WFS_BASE_URL,
-        "bbox": HONG_KONG_BBOX,
-        "layers": results,
-        "failures": failures,
-    }
-
     with open(METADATA_PATH, "w", encoding="utf-8") as meta_file:
-        json.dump(metadata, meta_file, ensure_ascii=False, indent=2)
+        meta_file.write("{\n")
+        meta_file.write(f'  "generatedAt": {json.dumps(finished_at)},\n')
+        meta_file.write(f'  "source": {json.dumps(WFS_BASE_URL)},\n')
+        meta_file.write(f'  "bbox": {json.dumps(HONG_KONG_BBOX)},\n')
+        meta_file.write('  "layers": [\n')
+
+        first_layer = True
+        with open(layer_results_path, "r", encoding="utf-8") as result_file:
+            for line in result_file:
+                if not first_layer:
+                    meta_file.write(",\n")
+                meta_file.write(f"    {line.rstrip()}")
+                first_layer = False
+
+        meta_file.write("\n  ],\n")
+        meta_file.write(f'  "failures": {json.dumps(failures, ensure_ascii=False, indent=2)}\n')
+        meta_file.write("}\n")
+
+    os.remove(layer_results_path)
 
     print(f"WFS sync finished at {finished_at}")
-    print(f"Layers succeeded: {len(results)}")
+    print(f"Layers succeeded: {successful_layers}")
     print(f"Layers failed: {len(failures)}")
 
     if failures:
