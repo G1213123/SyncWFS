@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const fs = require('fs/promises');
 const path = require('path');
+const { Storage } = require('@google-cloud/storage');
 const geojsonvtModule = require('geojson-vt');
 const vtpbfModule = require('vt-pbf');
 
@@ -30,7 +31,11 @@ const BASE_DIR = path.resolve(process.env.APP_DIR || __dirname);
 const TMP_DIR = path.resolve(process.env.TMP_DIR || '/tmp');
 const WFS_DIR = path.join(TMP_DIR, 'public', 'data', 'wfs');
 const MVT_DIR = path.join(TMP_DIR, 'public', 'data', 'mvt');
+const GCS_BUCKET = process.env.GCS_BUCKET || 'my-gcs-bucket';
+const GCS_OBJECT = process.env.GCS_OBJECT || 'public/data/mvt/manifest.json';
 const MVT_MANIFEST_PATH = path.join(MVT_DIR, 'manifest.json');
+const MVT_MANIFEST_GCS_URI = `gs://${GCS_BUCKET}/${GCS_OBJECT}`;
+const storage = new Storage();
 const { spawn } = require('child_process');
 
 const MIN_ZOOM = Number.parseInt(process.env.MVT_MIN_ZOOM || '12', 10);
@@ -178,6 +183,13 @@ function normalizeMvtLayerName(typeName) {
 
 function formatBuildDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
+}
+
+async function readGcsJson(uri) {
+  const match = /^gs:\/\/([^/]+)\/(.+)$/.exec(uri);
+  if (!match) throw new Error(`Invalid Google Cloud Storage URI: ${uri}`);
+  const [contents] = await storage.bucket(match[1]).file(match[2]).download();
+  return JSON.parse(contents.toString('utf8'));
 }
 
 function typeNameFromDirName(dirName) {
@@ -527,8 +539,7 @@ async function main() {
   };
 
   try {
-    const manifestText = await fs.readFile(MVT_MANIFEST_PATH, 'utf8');
-    const existingManifest = JSON.parse(manifestText);
+    const existingManifest = await readGcsJson(MVT_MANIFEST_GCS_URI);
     if (Array.isArray(existingManifest.builds)) {
       manifest.builds = existingManifest.builds;
     }

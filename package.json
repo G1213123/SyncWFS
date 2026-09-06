@@ -2,9 +2,11 @@
   "private": true,
   "scripts": {
     "build-tiles": "node app/build_vector_tiles.js",
-    "build-image": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\build_image.ps1"
+    "build-image": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\build_image.ps1",
+    "test-manifest-gcs": "node test_manifest_gcs.js"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
     "geojson-vt": "^4.0.2",
     "stream-json": "^1.9.1",
     "vt-pbf": "^3.1.3"
